@@ -1,0 +1,116 @@
+﻿@model Group1.Web.Models.ShoppingCart
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "GetCartContent";
+}
+<link rel="stylesheet" href="~/css/cardRadioStyle.css" />
+@if (Model.cartItems != null && Model.TotalPrice > 0)
+{
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="alert alert-warning" role="alert">
+            You need to <a href="~/Identity/Account/Login">login</a> to place an order.
+        </div>
+    }
+    <form method="post" asp-action="CreateOrder" asp-controller="Order">
+        <div class="row">
+            <div class="col-lg-6">
+                @{
+                    string disabled = "disabled";
+                    string hidden = "hidden";
+                    if (Model.cartItems != null)
+                    {
+                        if (User.Identity.IsAuthenticated)
+                        {
+                            disabled = "";
+                            hidden = "";
+                        }
+                        for (int i = 0; i < Model.cartItems.Count; i++)
+                        {
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <img class="img" src="@Model.cartItems[i].Product.ImageUrl" style="height:auto; width:100%" />
+                                        </div>
+                                        <div class="col-3">
+                                            <p>Quantity:</p>
+                                            <p>Unit price:</p>
+                                            <p>Total Price:</p>
+                                        </div>
+                                        <div class="col-5">
+                                            <p>@Html.DisplayFor(modelItem => modelItem.cartItems[i].Quantity)</p>
+                                            <p>@Model.cartItems[i].Product.Price SEK</p>
+                                            <p>@{var tp = Model.cartItems[i].Product.Price * Model.cartItems[i].Quantity;} @tp SEK</p>
+                                            <input type="submit" value="Remove" class="btn btn-danger" asp-action="DeleteAnItem" asp-controller="ShoppingCart" asp-route-id="@Model.cartItems[i].Product.Id" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Product.Id)
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Product.ImageUrl)
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Product.Price)
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Quantity)
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Product.Quantity)
+                            @Html.HiddenFor(modelItem => modelItem.cartItems[i].Product.Name)
+                        }
+                    }
+                }
+
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card border-0">
+                    <div class="card-header" style="background-color:#ffffff">
+                        <h5>Order Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="clearfix" style="margin : 0 75px 0">
+                            <h6 class="float-left">Subtotal:</h6>
+                            <span class="float-right">@Model.TotalPrice SEK</span>
+                            @Html.HiddenFor(modelItem => modelItem.TotalPrice)
+                        </div>
+                        <div class="clearfix" style="margin : 0 75px 0" @hidden>
+                            <h6 class="float-left">Payment:</h6>
+                            <span class="float-lg-right">
+                                <input class="hidden radio-label" id="swish-button" type="radio" name="paymentMethod" value="1" onchange="payment()" @*required*@>
+                                <label class="button-label" for="swish-button">Swish</label>
+
+                                <input class="hidden radio-label" id="card-button" type="radio" name="paymentMethod" value="2" onchange="payment()" checked="checked">
+                                <label class="button-label" for="card-button">Card</label>
+                            </span>
+                        </div>
+                        <div class="clearfix" style="margin : 0 75px 0" @hidden>
+                            <h6 class="float-left">Shipping:</h6>
+                            <span class="float-lg-right">
+                                <input class="hidden radio-label" id="homeDelivery-button" type="radio" name="deliveryMethod" value="1" onchange="checkFee()" @*required*@>
+                                <label class="button-label" for="homeDelivery-button">Home delivery</label>
+
+                                <input class="hidden radio-label" id="TakeAway-button" type="radio" name="deliveryMethod" value="2" onchange="checkFee()" checked="checked">
+                                <label class="button-label" for="TakeAway-button">Take away</label>
+
+                            </span>
+                        </div>
+                        <div class="clearfix" style="margin : 0 75px 0" @hidden>
+                            <h6 class="float-left">Shipping fee:</h6>
+                            <span class="float-lg-right" id="shippingFee">0 SEK</span>
+                        </div>
+                        <div class="clearfix" style="margin : 0 75px 0" @hidden>
+                            <h6 class="float-left">Total:</h6>
+                            <span class="float-lg-right" id="totalPrice">@Model.TotalPrice SEK</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer" style="background-color:#ffffff" >
+                        <p><input type="submit" value="PROCEED TO CHECKOUT" class="btn btn-success btn-block" @*onclick="requiredCheck()"*@ @disabled /></p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+</form>
+}
+else
+{
+    <p>Your shopping cart is empty</p>
+}
